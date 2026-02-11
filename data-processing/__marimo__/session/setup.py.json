@@ -1,0 +1,86 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.19.9"
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "475379d490e3ed20dfda69c3795841d4",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"overview\">Overview</h2>\n<span class=\"paragraph\">This script is used to setup the persistent DuckDB database by combining the data from all the 2025 months in NYC together.</span>\n<span class=\"paragraph\">Once this script runs and the database is established, we can interact with the database using a connection. <strong>This means we only have to run this script once to populatie our DuckDB database.</strong></span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "d4627019bfb5885a6b6c2b340ae25640",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "04d73f1bbfe2f9b6950c83affc226134",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "f5f2518d6ae786b744a46f32835e354d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                 column_name                  \u2502 column_type \u2502  null   \u2502   key   \u2502 default \u2502  extra  \u2502\n\u2502                   varchar                    \u2502   varchar   \u2502 varchar \u2502 varchar \u2502 varchar \u2502 varchar \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 id                                           \u2502 BIGINT      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 listing_url                                  \u2502 VARCHAR     \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 scrape_id                                    \u2502 BIGINT      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 last_scraped                                 \u2502 DATE        \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 source                                       \u2502 VARCHAR     \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 name                                         \u2502 VARCHAR     \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 description                                  \u2502 VARCHAR     \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 neighborhood_overview                        \u2502 VARCHAR     \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 picture_url                                  \u2502 VARCHAR     \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 host_id                                      \u2502 BIGINT      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502    \u00b7                                         \u2502   \u00b7         \u2502  \u00b7      \u2502  \u00b7      \u2502  \u00b7      \u2502  \u00b7      \u2502\n\u2502    \u00b7                                         \u2502   \u00b7         \u2502  \u00b7      \u2502  \u00b7      \u2502  \u00b7      \u2502  \u00b7      \u2502\n\u2502    \u00b7                                         \u2502   \u00b7         \u2502  \u00b7      \u2502  \u00b7      \u2502  \u00b7      \u2502  \u00b7      \u2502\n\u2502 review_scores_communication                  \u2502 DOUBLE      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 review_scores_location                       \u2502 DOUBLE      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 review_scores_value                          \u2502 DOUBLE      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 license                                      \u2502 VARCHAR     \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 instant_bookable                             \u2502 BOOLEAN     \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 calculated_host_listings_count               \u2502 BIGINT      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 calculated_host_listings_count_entire_homes  \u2502 BIGINT      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 calculated_host_listings_count_private_rooms \u2502 BIGINT      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 calculated_host_listings_count_shared_rooms  \u2502 BIGINT      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u2502 reviews_per_month                            \u2502 DOUBLE      \u2502 YES     \u2502 NULL    \u2502 NULL    \u2502 NULL    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 85 rows (20 shown)                                                                       6 columns \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "UVtz",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "df08795839eecb1e67eaff04d63e3ed1",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"questions\">Questions</h2>\n<ol>\n<li>How do all the criteria apply to a person with many listings?</li>\n<li>What is a good proxy for cancellation rate?</li>\n<li>Is the overall rating a rating for the host or the property?</li>\n<li>\n<span class=\"paragraph\">How do we know if a review counts towards Superhost status?</span>\n<ul>\n<li>Would we have to manually sift through all the reviews to determine if it counts toward an assessment period?</li>\n</ul>\n</li>\n<li>Since there are multiple assessment periods in a year, how would we handle people that lost and earned the Superhost badge throughout the year.</li>\n<li>How do we handle multiple hosts showing up in multiple quarters where their status of Superhost can change?</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}
