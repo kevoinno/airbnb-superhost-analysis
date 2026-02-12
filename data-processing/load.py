@@ -28,8 +28,8 @@ def _():
 
 @app.cell
 def _(os):
-    DATA_PATH = os.path.join("..", "data", "listings_dec_2025.csv")
-    DB_PATH = os.path.join("..", "data", "listings.db")
+    DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "listings_*.csv.gz")
+    DB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "listings.db")
     return DATA_PATH, DB_PATH
 
 
@@ -37,16 +37,18 @@ def _(os):
 def _(DATA_PATH, DB_PATH, duckdb):
     with duckdb.connect(DB_PATH) as con:
         con.sql(f"""
-        DESCRIBE-
-        SELECT *
-        FROM '{DATA_PATH}'
-        """).show()
-    
-    return
-
-
-@app.cell
-def _():
+            CREATE OR REPLACE TABLE raw_listings AS
+            SELECT 
+                *,
+                last_scraped::DATE AS snapshot_date, -- Automatically extract the date from the data itself
+                filename AS source_file -- Keep the filename as a backup identifier
+            FROM read_csv_auto(
+                '{DATA_PATH}', 
+                filename=True, 
+                union_by_name=True
+            )
+        """)
+        print("Database Load Complete.")
     return
 
 
