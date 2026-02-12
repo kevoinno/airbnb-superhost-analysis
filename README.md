@@ -36,6 +36,10 @@ Final form of data
 - all in duckdb
 - raw data will not be on Github
 
+### Setup
 
+1. Clone repo
+2. Run download.py, which will create the data/ directory, containing the raw listings
+3. Run load.py, which will create a listings.db file in the data/ directory, which is the DuckDB database
 
 

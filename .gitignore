@@ -1,3 +1,4 @@
-.venv
-data/listings*.csv.gz
+.venv/
+data/
 **/*.Zone.Identifier
+
