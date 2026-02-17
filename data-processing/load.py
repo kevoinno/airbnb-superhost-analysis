@@ -11,7 +11,7 @@ def _(mo):
 
     This script is used to setup the persistent DuckDB database by combining the data from all the 2025 months in NYC together.
 
-    Once this script runs and the database is established, we can interact with the database using a connection. **This means we only have to run this script once to populatie our DuckDB database.**
+    Once this script runs and the database is established, we can interact with the database using a connection. **This means we only have to run this script once to populate our DuckDB database.**
     """)
     return
 
@@ -49,21 +49,6 @@ def _(DATA_PATH, DB_PATH, duckdb):
             )
         """)
         print("Database Load Complete.")
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## Questions
-    1. How do all the criteria apply to a person with many listings?
-    2. What is a good proxy for cancellation rate?
-    3. Is the overall rating a rating for the host or the property?
-    4. How do we know if a review counts towards Superhost status?
-        - Would we have to manually sift through all the reviews to determine if it counts toward an assessment period?
-    5. Since there are multiple assessment periods in a year, how would we handle people that lost and earned the Superhost badge throughout the year.
-    6. How do we handle multiple hosts showing up in multiple quarters where their status of Superhost can change?
-    """)
     return
 
 

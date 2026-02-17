@@ -1,0 +1,31 @@
+[0m10:20:53.866495 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x72d7cf8b0980>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x72d7d133c2d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x72d7cea27c50>]}
+
+
+============================== 10:20:53.925508 | dc33c97a-df86-4f98-a571-b6843e26e2c5 ==============================
+[0m10:20:53.925508 [info ] [MainThread]: Running with dbt=1.11.5
+[0m10:20:53.926228 [debug] [MainThread]: running dbt with arguments {'profiles_dir': '/home/kevin/.dbt', 'invocation_command': 'dbt init airbnb_shop', 'partial_parse': 'True', 'fail_fast': 'False', 'introspect': 'True', 'indirect_selection': 'eager', 'log_path': 'logs', 'write_json': 'True', 'static_parser': 'True', 'version_check': 'True', 'no_print': 'None', 'log_format': 'default', 'target_path': 'None', 'printer_width': '80', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'empty': 'None', 'cache_selected_only': 'False', 'debug': 'False', 'log_cache_events': 'False', 'send_anonymous_usage_stats': 'True', 'warn_error': 'None', 'use_experimental_parser': 'False', 'use_colors': 'True', 'quiet': 'False'}
+[0m10:20:54.000439 [info ] [MainThread]: Creating dbt configuration folder at /home/kevin/.dbt
+[0m10:20:54.004954 [debug] [MainThread]: Starter project path: /home/kevin/ds-projects/airbnb-superhost-analysis/.venv/lib/python3.13/site-packages/dbt/include/starter_project
+[0m10:20:54.011036 [info ] [MainThread]: 
+Your new dbt project "airbnb_shop" was created!
+
+For more information on how to configure the profiles.yml file,
+please consult the dbt documentation here:
+
+  https://docs.getdbt.com/docs/configure-your-profile
+
+One more thing:
+
+Need help? Don't hesitate to reach out to us via GitHub issues or on Slack:
+
+  https://community.getdbt.com/
+
+Happy modeling!
+
+[0m10:20:54.011775 [info ] [MainThread]: Setting up your profile.
+[0m10:21:03.108662 [info ] [MainThread]: Profile airbnb_shop written to /home/kevin/.dbt/profiles.yml using target's sample configuration. Once updated, you'll be able to start developing with dbt.
+[0m10:21:03.111301 [debug] [MainThread]: Resource report: {"command_name": "init", "command_success": true, "command_wall_clock_time": 9.325673, "process_in_blocks": "0", "process_kernel_time": 0.507022, "process_mem_max_rss": "132656", "process_out_blocks": "1432", "process_user_time": 3.094034}
+[0m10:21:03.112359 [debug] [MainThread]: Command `dbt init` succeeded at 10:21:03.112144 after 9.33 seconds
+[0m10:21:03.113100 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x72d7ce80a190>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x72d7ce7ef9b0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x72d7ce91b9b0>]}
+[0m10:21:03.114278 [debug] [MainThread]: Flushing usage events
+[0m10:21:03.538998 [debug] [MainThread]: An error was encountered while trying to flush usage events

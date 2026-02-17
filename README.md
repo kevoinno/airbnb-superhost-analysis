@@ -42,8 +42,9 @@ Because we are using a Fuzzy RDD design, we have some additional assumptions tha
 TODO:
 
 ### Data Processing
-- Load all data into a DuckDB db in load.py
-- Get data into correct form using dbt (after planning)
+- Get data into correct form using dbt 
+  - continue setting dbt project using (https://docs.getdbt.com/guides/manual-install?step=4) and jaffle mini project
+  - start making models
 
 Final form of data
 - Feb and Jan 2025 are missing 

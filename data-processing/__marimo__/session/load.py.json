@@ -6,12 +6,12 @@
   "cells": [
     {
       "id": "Hbol",
-      "code_hash": "475379d490e3ed20dfda69c3795841d4",
+      "code_hash": "7519b10f6584181148e0cf797e9dfef1",
       "outputs": [
         {
           "type": "data",
           "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"overview\">Overview</h2>\n<span class=\"paragraph\">This script is used to setup the persistent DuckDB database by combining the data from all the 2025 months in NYC together.</span>\n<span class=\"paragraph\">Once this script runs and the database is established, we can interact with the database using a connection. <strong>This means we only have to run this script once to populatie our DuckDB database.</strong></span></span>"
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"overview\">Overview</h2>\n<span class=\"paragraph\">This script is used to setup the persistent DuckDB database by combining the data from all the 2025 months in NYC together.</span>\n<span class=\"paragraph\">Once this script runs and the database is established, we can interact with the database using a connection. <strong>This means we only have to run this script once to  our DuckDB database.</strong></span></span>"
           }
         }
       ],
@@ -44,7 +44,7 @@
       "console": []
     },
     {
-      "id": "EWJw",
+      "id": "bkHC",
       "code_hash": "ab48d1627585ffe4af924bb61d7df27f",
       "outputs": [
         {
@@ -62,19 +62,6 @@
           "mimetype": "text/plain"
         }
       ]
-    },
-    {
-      "id": "PKri",
-      "code_hash": "df08795839eecb1e67eaff04d63e3ed1",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"questions\">Questions</h2>\n<ol>\n<li>How do all the criteria apply to a person with many listings?</li>\n<li>What is a good proxy for cancellation rate?</li>\n<li>Is the overall rating a rating for the host or the property?</li>\n<li>\n<span class=\"paragraph\">How do we know if a review counts towards Superhost status?</span>\n<ul>\n<li>Would we have to manually sift through all the reviews to determine if it counts toward an assessment period?</li>\n</ul>\n</li>\n<li>Since there are multiple assessment periods in a year, how would we handle people that lost and earned the Superhost badge throughout the year.</li>\n<li>How do we handle multiple hosts showing up in multiple quarters where their status of Superhost can change?</li>\n</ol></span>"
-          }
-        }
-      ],
-      "console": []
     }
   ]
 }
