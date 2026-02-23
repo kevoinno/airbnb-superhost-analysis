@@ -1,0 +1,5 @@
+sources:
+  - name: airbnb_shop
+    schema: main
+    tables:
+      - name: raw_listings

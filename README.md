@@ -40,16 +40,52 @@ Because we are using a Fuzzy RDD design, we have some additional assumptions tha
 3. Monotonicity - This means there are defiers, which means there are no hosts who would not have a Superhost badge when they cross the 4.8 threshold AND have a badge when they are below the threshold. Having such a host is impossible because a host cannot get a Superhost badge if they are below the rating threshold.
 
 TODO:
+- focus on building dataset for the Fuzzy RDD
 
 ### Data Processing
 - Get data into correct form using dbt 
-  - continue setting dbt project using (https://docs.getdbt.com/guides/manual-install?step=4) and jaffle mini project
+  - figure out issues with first model
   - start making models
+
+### Data Dictionary — Final Cross-Sectional Dataset
+
+The grain is one row per listing per snapshot. Source column names refer to the raw Inside Airbnb CSV.
+
+#### RDD Design Variables
+
+| Column | Role | Source Column | Description |
+|---|---|---|---|
+| `listing_id` | Primary key | `id` | Unique identifier for the Airbnb listing. |
+| `avg_host_review_score` | Running variable (X) | `review_scores_rating` (averaged per `host_id`) | The host's average review score rating across all their listings. The Superhost cutoff is **4.8**. Computed by averaging listing-level `review_scores_rating` within each host. |
+| `qualified_by_avg_host_review_score` | Instrument (Z) | Derived | Binary flag: `1` if `avg_host_review_score >= 4.8`, else `0`. Indicates whether the host clears the review score threshold for Superhost eligibility. |
+| `has_superhost` | Treatment (D) | `host_is_superhost` | Binary flag: `1` if the listing carries the Superhost badge, else `0`. A host can clear the threshold without receiving the badge (hence the fuzzy design). |
+| `num_reviews_l12m` | Outcome (Y) | `number_of_reviews_l12m` | Number of reviews the listing received in the last 12 months. Used as a proxy for bookings, since Airbnb guests are prompted to review after each stay. |
+
+#### Covariates
+
+| Column | Source Column | Description |
+|---|---|---|
+| `host_id` | `host_id` | Unique identifier for the host. Used for clustering standard errors at the host level, since a single host can have multiple listings. |
+| `host_identity_verified` | `host_identity_verified` | Boolean; whether Airbnb has confirmed the host's government-issued identity. |
+| `neighbourhood_cleansed` | `neighbourhood_cleansed` | Standardized NYC neighborhood name assigned by Airbnb's geocoding. Controls for location-driven demand differences. |
+| `property_type` | `property_type` | Free-text category describing the type of property (e.g., "Entire rental unit", "Private room in townhouse"). |
+| `room_type` | `room_type` | Broad room access category: one of Entire home/apt, Private room, Shared room, or Hotel room. |
+| `accommodates` | `accommodates` | Maximum number of guests the listing can accommodate. Controls for listing size. |
+| `bathrooms` | `bathrooms` | Number of bathrooms. Controls for listing quality. |
+| `bedrooms` | `bedrooms` | Number of bedrooms. Controls for listing size. |
+| `instant_bookable` | `instant_bookable` | Boolean; whether guests can book without prior host approval. May independently affect booking volume. |
+| `host_since` | `host_since` | Date the host joined Airbnb. Used as a proxy for host experience and tenure. |
 
 Final form of data
 - Feb and Jan 2025 are missing 
 - all in duckdb
 - raw data will not be on Github
+
+We need to produce 2 datasets because we will run 2 regressions
+1. Fuzzy RDD with clustered std. errors on host_id
+2. Fixed Effects RDD with clusterd std. errors on host_id
+
+1 requires the cross-sectional data, while 2 requires a panel dataset with only the people who switched by crossing the 4.8 threshold.
 
 ### Setup
 

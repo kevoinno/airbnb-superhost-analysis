@@ -1,0 +1,8 @@
+airbnb_shop:
+
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: '../data/listings.db'
+      threads: 24
