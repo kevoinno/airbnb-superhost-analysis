@@ -43,9 +43,11 @@ TODO:
 - focus on building dataset for the Fuzzy RDD
 
 ### Data Processing
-- Get data into correct form using dbt 
+- Get data into correct form using dbt
   - figure out issues with first model
   - start making models
+- TODO: Configure per-layer dbt materializations in `dbt_project.yml` (staging/intermediate → view, marts → table)
+- TODO: Add `schema.yml` test files for each model layer (unique/not_null on keys, accepted_values on binary flags)
 
 ### Data Dictionary — Final Cross-Sectional Dataset
 
@@ -56,6 +58,7 @@ The grain is one row per listing per snapshot. Source column names refer to the 
 | Column | Role | Source Column | Description |
 |---|---|---|---|
 | `listing_id` | Primary key | `id` | Unique identifier for the Airbnb listing. |
+| `scrape_date` | Panel dimension | `last_scraped` | Date the listing snapshot was scraped by Inside Airbnb. Required to track how a host's status changes over time across monthly snapshots. Used as the time dimension in the Fixed Effects RDD panel dataset. |
 | `avg_host_review_score` | Running variable (X) | `review_scores_rating` (averaged per `host_id`) | The host's average review score rating across all their listings. The Superhost cutoff is **4.8**. Computed by averaging listing-level `review_scores_rating` within each host. |
 | `qualified_by_avg_host_review_score` | Instrument (Z) | Derived | Binary flag: `1` if `avg_host_review_score >= 4.8`, else `0`. Indicates whether the host clears the review score threshold for Superhost eligibility. |
 | `has_superhost` | Treatment (D) | `host_is_superhost` | Binary flag: `1` if the listing carries the Superhost badge, else `0`. A host can clear the threshold without receiving the badge (hence the fuzzy design). |
