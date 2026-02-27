@@ -1,0 +1,36 @@
+models:
+  - name: listings_fuzzy_rdd
+    description: Final dataset for Fuzzy Regression Discontinuity Design analysis of Airbnb Superhost status effects on bookings.
+    columns:
+      - name: listing_id
+        description: Unique identifier for the Airbnb listing.
+      - name: avg_host_review_score
+        description: Host-level average review score (running variable). Computed as a weighted average across all of the host's listings. The RDD cutoff is 4.8.
+      - name: qualified_by_avg_host_review_score
+        description: Binary indicator (1/0) for whether the host meets the Superhost review score threshold (avg_host_review_score >= 4.8).
+      - name: has_superhost
+        description: Binary indicator (1/0) for whether the host currently holds Superhost status (treatment variable).
+      - name: num_reviews_l12m
+        description: Number of reviews received in the last 12 months. Used as a proxy for bookings (outcome variable).
+      - name: scrape_date
+        description: Date the listing data was scraped from Inside Airbnb.
+      - name: host_id
+        description: Unique identifier for the host.
+      - name: host_identity_verified
+        description: Binary indicator (1/0) for whether the host's identity has been verified by Airbnb.
+      - name: neighbourhood_cleansed
+        description: Standardised neighbourhood name for the listing's location.
+      - name: property_type
+        description: Type of property (e.g. entire home, private room).
+      - name: room_type
+        description: Category of room offered (e.g. Entire home/apt, Private room, Shared room).
+      - name: accommodates
+        description: Maximum number of guests the listing can accommodate.
+      - name: bathrooms
+        description: Number of bathrooms in the listing.
+      - name: bedrooms
+        description: Number of bedrooms in the listing.
+      - name: instant_bookable
+        description: Whether the listing can be booked instantly without host approval.
+      - name: host_since
+        description: Date the host first joined Airbnb. Can be used to derive host experience/tenure.

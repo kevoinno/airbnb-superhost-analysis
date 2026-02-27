@@ -1,3 +1,5 @@
+{{ config(materialized = 'table')}}
+
 WITH listings_fuzzy_rdd AS (
   SELECT listing_id,
         avg_host_review_score,
