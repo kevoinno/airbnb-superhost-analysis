@@ -4,15 +4,22 @@ Have you thought about being an Airbnb host? While booking properties, you might
 
 ## Identification Strategy 
 
-The main question is "What is the effect of having Superhost status on bookings for the host's listings?"
+The main question is **"What is the effect of having Superhost status on bookings for the host's listings?"**
+
+Our approach will involve a fuzzy regression discontinuity design.
+
+## Notes on Data Cleaning  
+- The same listing "A" can occur many times over the year based on the scraping. For the analysis, we will use the most recent version of the listing to avoid inflating the sample size without adding additional information
 
 ## How to become a Superhost
 
 Technically, there are 4 evaluation periods throughout the quarter where qualifying hosts can become superhosts. These four criteria are computed using the host's data from the past 365 days:  
 1. Host at least 10 reservations OR 3 reservations that total at least 100 nights over three stays.  
 2. Cancelation rate < 10%  
-3. >= 90% response rate  
-4. >= 4.8 overall rating  
+3. at least a 90% response rate  
+4. at least a 4.8 overall rating  
+
+Only 1 and 4 are in the dataset, and the overall host rating is the only reliably measured metric. Therefore 
 
 ### Setup
 
@@ -20,41 +27,27 @@ Technically, there are 4 evaluation periods throughout the quarter where qualify
 2. Run download.py, which will create the data/ directory, containing the raw listings
 3. Run load.py, which will create a listings.db file in the data/ directory, which is the DuckDB database
 
----
 
 ## dbt Pipeline
 
 ```
-[Source]
-listings (raw CSV — multiple scrape months)
-    │
-    ▼
-[Staging]
-listings_filtered_cols (view)
-    Selects and renames columns; parses host_response_rate from "95%" → 95.0
-    │
-    ▼
-[Intermediate]
-listings_deduped (view)
-    Deduplicates to one row per listing_id, keeping the most recent scrape_date
-    │
-    ▼
-[Intermediate]
-listings_aggregated_stats (view)
-    Computes avg_host_review_score as a review-count-weighted average across
-    all of a host's listings (window function over host_id)
-    │
-    ▼
-[Mart]
-listings_fuzzy_rdd (table)
-    Collapses to one row per host_id. Sums num_reviews_l12m across listings
-    as the bookings proxy. Adds binary treatment/qualification indicators
-    for use in the RDD.
+listings (source)
+    └── stg_listings_filtered_cols
+            └── int_listings_deduped
+                    └── int_listings_aggregated_stats
+                                └── mart_listings_fuzzy_rdd
 ```
 
 | Model | Layer | Grain | Purpose |
 |---|---|---|---|
-| `listings_filtered_cols` | Staging | listing × scrape month | Column selection and type casting |
-| `listings_deduped` | Intermediate | listing (latest scrape) | Remove duplicate rows across panel months |
-| `listings_aggregated_stats` | Intermediate | listing (latest scrape) | Host-level weighted average review score |
-| `listings_fuzzy_rdd` | Mart | host | Final analysis dataset for the RDD |
+| `listings` | Staging | listing × scrape month | View over raw source CSV data |
+| `listings_filtered_cols` | Staging | listing × scrape month | Column selection and type casting (parses `host_response_rate` from "95%" → 95.0) |
+| `listings_deduped` | Intermediate | listing (latest scrape) | Deduplicates panel data to one row per listing, keeping most recent scrape |
+| `listings_aggregated_stats` | Intermediate | listing (latest scrape) | Adds `avg_host_review_score`: review-count-weighted average across all of a host's listings |
+| `listings_fuzzy_rdd` | Mart | **host** | Final RDD dataset — one row per host, `num_reviews_l12m` summed across listings, binary treatment indicators |
+
+To view interactive docs:
+
+```bash
+uv run dbt docs generate && uv run dbt docs serve
+```
