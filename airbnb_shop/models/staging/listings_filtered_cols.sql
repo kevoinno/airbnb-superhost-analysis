@@ -18,7 +18,8 @@ WITH listings_filtered_cols AS
         host_since,
         -- OTHER NEEDED VARIBLES
         review_scores_rating AS listing_rating,
-        number_of_reviews AS num_listing_reviews
+        number_of_reviews AS num_listing_reviews,
+        TRY_CAST(REPLACE(host_response_rate, '%', '') AS DOUBLE) AS host_response_rate
   FROM {{ ref("listings") }}
 )
 

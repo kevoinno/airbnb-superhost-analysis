@@ -19,8 +19,9 @@ WITH listings_aggregated_stats AS
         bathrooms,
         bedrooms,
         instant_bookable,
-        host_since
-  FROM {{ ref("listings_filtered_cols") }}
+        host_since,
+        host_response_rate
+  FROM {{ ref("listings_deduped") }}
 )
 
 SELECT * FROM listings_aggregated_stats
