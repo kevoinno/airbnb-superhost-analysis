@@ -2,14 +2,26 @@
 
 Have you thought about being an Airbnb host? While booking properties, you might have seen a cool title for experienced, excellent hosts called "Superhost". To get this title, you have to meet several criteria, and this analysis attempts to quantify the value of having this title for your business.
 
-## Identification Strategy 
+## Identification Strategy
 
 The main question is **"What is the effect of having Superhost status on bookings for the host's listings?"**
 
 Our approach will involve a fuzzy regression discontinuity design.
 
-## Notes on Data Cleaning  
-- The same listing "A" can occur many times over the year based on the scraping. For the analysis, we will use the most recent version of the listing to avoid inflating the sample size without adding additional information
+Y = num_reviews_l12m
+X = avg_host_review_score
+D = has_superhost
+
+### Causal DAG
+
+![Fuzzy RDD DAG](assets/fuzzy_rdd_dag.svg)
+
+The threshold indicator **Z = 1[R ≥ 4.8]** acts as an instrument for actual Superhost status (D). Because Z is a deterministic function of the running variable R, it satisfies the relevance condition — crossing the 4.8 cutoff sharply increases the probability of receiving Superhost status.
+
+The key identifying assumption is **smoothness**: the direct effect of the overall rating R on bookings Y is smooth through the cutoff. Under this assumption, the direct path R → Y cannot produce a discontinuity at 4.8. Any jump in Y at the threshold must therefore flow through D (Superhost status), allowing us to identify the **Local Average Treatment Effect (LATE)** via the ratio of the reduced-form discontinuity to the first-stage discontinuity.
+
+## Notes on data cleaning
+- data was transformed from listing granularity to host granularity because metrics like response rate and overall rating are on the host level
 
 ## How to become a Superhost
 
