@@ -1,0 +1,411 @@
+---
+title: "Fuzzy RDD: Airbnb Superhost Effect"
+format: pdf
+---
+
+## Setup
+
+```{r}
+#| message: false
+library(duckdb)
+library(rdrobust)
+library(rddensity)
+library(ggplot2)
+library(gpss)
+library(tidyr)
+library(stringr)
+```
+
+## Load Data
+
+```{r}
+con         <- dbConnect(duckdb(), "../data/listings.db")
+listings_rdd <- dbGetQuery(con, "SELECT * FROM listings_fuzzy_rdd")
+dbDisconnect(con)
+```
+
+## Center Running Variable
+
+```{r}
+# Center around the 4.8 superhost cutoff
+listings_rdd$centered_overall_score <- listings_rdd$avg_host_review_score - 4.8
+
+# last_scraped is aliased as scrape_date in the dbt pipeline
+listings_rdd$host_tenure_days <- as.numeric(
+  as.Date(listings_rdd$scrape_date) - as.Date(listings_rdd$host_since)
+)
+
+```
+
+We center so that the regression model is simpler to interpret. The causal effects will still be the same!
+
+**Uncentered model:**  
+
+$$
+\begin{aligned}
+\text{reviews last 12 months} = \alpha + \beta_1 \text{has superhost} + \beta_2 \text{overall ratings} + \epsilon
+\end{aligned}
+$$
+
+With an uncentered model, to calculate reviews in the last 12 months for someone at the cutoff who isn't a superhost, we would have to do $\alpha + 4.8\beta_2 + \epsilon$.
+
+**Centered model:**  
+$$
+\begin{aligned}
+\text{reviews last 12 months} = \alpha + \beta_1 \text{has superhost} + \beta_2 \text{centered overall ratings} + \epsilon
+\end{aligned}
+$$
+
+With the centered model, to calculate the same value, we would only have to do $\alpha + \epsilon$ since the $\beta_2$ will become 0, since the cutoff of the centered ratings is 0.
+
+## Exploratory RDD Plot
+
+Before running a formal analysis, we want to see if there is even a discontinuity.
+
+```{r}
+cutoff <- 0
+nbins  <- 40
+
+x <- listings_rdd$centered_overall_score
+y <- listings_rdd$num_reviews_l12m
+df <- data.frame(x = x, y = y) |> na.omit()
+
+breaks      <- seq(min(df$x), max(df$x), length.out = nbins + 1)
+df$bin      <- cut(df$x, breaks = breaks, include.lowest = TRUE)
+bin_centers <- (breaks[-length(breaks)] + breaks[-1]) / 2
+
+bin_means <- tapply(df$y, df$bin, mean, na.rm = TRUE)
+plot_df   <- data.frame(
+  x    = bin_centers,
+  mean = as.numeric(bin_means),
+  side = ifelse(bin_centers < cutoff, "Left", "Right")
+) |> na.omit()
+
+ggplot(plot_df, aes(x = x, y = mean, colour = side)) +
+  geom_point(size = 2) +
+  geom_smooth(
+    data   = subset(plot_df, side == "Left"),
+    method = "lm", formula = y ~ x, se = FALSE
+  ) +
+  geom_smooth(
+    data   = subset(plot_df, side == "Right"),
+    method = "lm", formula = y ~ x, se = FALSE
+  ) +
+  geom_vline(xintercept = cutoff, linetype = "dashed", colour = "black") +
+  scale_colour_manual(values = c("Left" = "steelblue", "Right" = "tomato")) +
+  labs(
+    title  = "Reviews (last 12m) by centered overall score",
+    x      = "Centered overall score  (0 = 4.8 cutoff)",
+    y      = "Avg reviews (last 12m)",
+    colour = NULL
+  ) +
+  theme_minimal()
+```
+
+## Fuzzy RDD Model
+
+The fuzzy design uses `has_superhost` as the treatment indicator. Crossing the 4.8
+threshold acts as an instrument — not everyone above the cutoff gets superhost status
+(and a few below do), so we estimate the LATE via an IV-like 2SLS approach.
+
+```{r}
+rdd_result <- rdrobust(
+  y          = listings_rdd$num_reviews_l12m,
+  x          = listings_rdd$centered_overall_score,
+  fuzzy      = listings_rdd$has_superhost,
+  masspoints = "adjust",
+  all        = TRUE
+)
+summary(rdd_result)
+```
+
+## RD Plot
+
+Visualise the fit using the MSE-optimal bandwidth selected by the model.
+
+```{r}
+rdplot(
+  y          = listings_rdd$num_reviews_l12m,
+  x          = listings_rdd$centered_overall_score,
+  h          = rdd_result$bws["h", ],
+  masspoints = "adjust"
+)
+```
+
+The robust results show that we are 95% confident that for the hosts who, when
+crossing the 4.8 overall rating threshold, would receive superhost status, the
+effect of becoming a superhost would have increased their number of reviews somewhere
+between 19 and 174 Since number of reviews is a proxy for bookings, this effect could
+translate to even more actual bookings.
+
+In next section, we delve into whether this estimate is actually trustworthy. 
+
+# Falsification Tests
+
+These tests help show when assumptions about the RDD are violated, but passing these tests **does not** prove that the assumptions hold.
+
+## Specification Robustness
+
+Does the LATE estimate change meaningfully when we use a different functional form?
+We compare three specifications: linear local polynomial (the default), quadratic
+local polynomial, and a Gaussian Process model (Cho, Kim & Hazlett, 2024;
+arXiv:2407.10442). We are looking for consistent results across the different model specifications.
+```{r}
+#| message: false
+
+# --- Quadratic local polynomial (p=2) ---
+rdd_quad <- rdrobust(
+  y          = listings_rdd$num_reviews_l12m,
+  x          = listings_rdd$centered_overall_score,
+  fuzzy      = listings_rdd$has_superhost,
+  p          = 2,
+  masspoints = "adjust",
+  all        = TRUE
+)
+
+# --- Gaussian Process (fuzzy via reduced form / first stage) ---
+h_opt <- rdd_result$bws["h", 1]
+gp_mask <- !is.na(listings_rdd$centered_overall_score) &
+           !is.na(listings_rdd$num_reviews_l12m) &
+           abs(listings_rdd$centered_overall_score) <= h_opt
+gp_df <- listings_rdd[gp_mask, ]
+
+# Reduced form: Y ~ X
+gp_rf <- gp_rdd(X = gp_df$centered_overall_score,
+                Y = gp_df$num_reviews_l12m,
+                cut = 0)
+
+# First stage: D ~ X
+gp_fs <- gp_rdd(X = gp_df$centered_overall_score,
+                Y = gp_df$has_superhost,
+                cut = 0)
+
+# Fuzzy LATE = reduced form gap / first stage gap
+gp_late   <- gp_rf$tau / gp_fs$tau
+# Delta method SE for the ratio
+gp_se     <- abs(gp_late) * sqrt((gp_rf$se / gp_rf$tau)^2 +
+                                  (gp_fs$se / gp_fs$tau)^2)
+```
+
+```{r}
+specs_df <- data.frame(
+  spec     = c("Linear (p=1)", "Quadratic (p=2)", "Gaussian Process"),
+  estimate = c(rdd_result$coef[1], rdd_quad$coef[1], gp_late),
+  ci_lo    = c(rdd_result$ci[3, 1], rdd_quad$ci[3, 1], gp_late - 1.96 * gp_se),
+  ci_hi    = c(rdd_result$ci[3, 2], rdd_quad$ci[3, 2], gp_late + 1.96 * gp_se)
+)
+specs_df$spec <- factor(specs_df$spec, levels = rev(specs_df$spec))
+
+ggplot(specs_df, aes(x = estimate, y = spec)) +
+  geom_point(size = 3) +
+  geom_errorbarh(aes(xmin = ci_lo, xmax = ci_hi), height = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "gray50") +
+  labs(
+    title = "Specification Robustness: Fuzzy RDD LATE Estimates",
+    x     = "LATE estimate (reviews in last 12 months)",
+    y     = NULL
+  ) +
+  theme_minimal()
+```
+
+Here, we notice that the Gaussian Process estimates have a far wider band than other model specifications.
+
+TODO: Review and understand GP.
+
+## Covariate Balance Checks
+
+The idea behind this test is if we find that a covariate related to the number of reviews in the last 12 months is discontinuous, then the potential outcomes of number of reviews in the last 12 months should be discontinuous too. If we find that a covariate is discontinuous, then that is evidence against the assumption of continuity of the potential outcomes in our RDD.
+
+For each covariate we compute bootstrapped t-statistics under three specifications:
+full-sample OLS, discontinuity-sample OLS (within the MSE-optimal bandwidth), and
+local linear regression via `rdrobust`. All t-statistics use bootstrap standard
+errors (500 resamples).
+
+```{r}
+#| message: false
+
+covariates <- c("qualified_by_response_rate", "prop_instant_bookable",
+                "host_tenure_days")
+h_opt <- rdd_result$bws["h", 1]
+
+set.seed(42)
+balance_results <- do.call(rbind, lapply(covariates, function(cov) {
+  df_bal <- listings_rdd[!is.na(listings_rdd[[cov]]) &
+                         !is.na(listings_rdd$centered_overall_score), ]
+
+  fml <- reformulate(c("centered_overall_score", "has_superhost",
+                        "centered_overall_score:has_superhost"),
+                      response = cov)
+
+  # Original full-sample coefficient
+  orig_full <- coef(lm(fml, data = df_bal))["has_superhost"]
+
+  # Bootstrap SE — full sample
+  boot_full <- replicate(500, {
+    idx <- sample(nrow(df_bal), replace = TRUE)
+    coef(lm(fml, data = df_bal[idx, ]))["has_superhost"]
+  })
+  t_full <- orig_full / sd(boot_full)
+
+  # Original discontinuity-sample coefficient
+  df_disc   <- df_bal[abs(df_bal$centered_overall_score) <= h_opt, ]
+  orig_disc <- coef(lm(fml, data = df_disc))["has_superhost"]
+
+  # Bootstrap SE — discontinuity sample
+  boot_disc <- replicate(500, {
+    idx <- sample(nrow(df_disc), replace = TRUE)
+    coef(lm(fml, data = df_disc[idx, ]))["has_superhost"]
+  })
+  t_disc <- orig_disc / sd(boot_disc)
+
+  # Local linear (rdrobust, sharp — covariate as outcome)
+  rdd_cov <- rdrobust(y = df_bal[[cov]],
+                      x = df_bal$centered_overall_score,
+                      masspoints = "adjust")
+  t_local <- rdd_cov$coef[1] / rdd_cov$se[3]   # conventional coef / robust SE
+
+  data.frame(covariate = cov,
+             t_full  = abs(t_full),
+             t_disc  = abs(t_disc),
+             t_local = abs(t_local))
+}))
+balance_results
+```
+
+```{r}
+balance_long <- pivot_longer(
+  balance_results,
+  cols      = c(t_full, t_disc, t_local),
+  names_to  = "spec",
+  values_to = "t_stat"
+)
+
+balance_long$spec <- factor(
+  balance_long$spec,
+  levels = c("t_full", "t_disc", "t_local"),
+  labels = c("Full Sample", "Discontinuity Sample", "Local Linear")
+)
+
+# Order covariates by full-sample t ascending (bottom to top)
+balance_results <- balance_results[order(balance_results$t_full), ]
+balance_long$covariate <- factor(balance_long$covariate,
+                                  levels = balance_results$covariate)
+
+ggplot(balance_long, aes(x = t_stat, y = covariate,
+                          colour = spec, shape = spec)) +
+  geom_point(size = 3) +
+  geom_vline(xintercept = 2, linetype = "dashed", colour = "gray50") +
+  scale_colour_manual(values = c("Full Sample"           = "red",
+                                  "Discontinuity Sample" = "green3",
+                                  "Local Linear"         = "blue")) +
+  scale_shape_manual(values = c("Full Sample"           = 16,
+                                 "Discontinuity Sample" = 17,
+                                 "Local Linear"         = 15)) +
+  labs(
+    title   = "RDD Covariate Balance",
+    x       = "Bootstrapped |t-statistic|",
+    y       = NULL,
+    colour  = "Specification",
+    shape   = "Specification",
+    caption = str_wrap(
+      "Dots left of the dashed line indicate no significant jump in that covariate at the cutoff. Full sample dots being large while discontinuity/local linear dots are small is a good sign -- it shows the RDD window is achieving local comparability.", 90
+    )
+  ) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0, size = 8))
+```
+
+## Placebo Cutoffs
+
+If the effect we estimated is truly causal, moving the cutoff to a value where no
+policy threshold exists should produce a null effect. We test placebo cutoffs at
+the 25th percentile (4.68) and median (4.87) of the running variable; the true
+cutoff (4.80) is included for reference. Note: the 75th percentile equals 5.0 (the
+score ceiling), making RDD infeasible there.
+
+```{r}
+#| message: false
+
+cutoffs <- data.frame(
+  label  = c("4.68 (p25, placebo)", "4.80 (true cutoff)", "4.87 (median, placebo)"),
+  cutoff = c(4.68, 4.80, 4.87),
+  is_true = c(FALSE, TRUE, FALSE)
+)
+
+placebo_results <- do.call(rbind, lapply(seq_len(nrow(cutoffs)), function(i) {
+  x_recentered <- listings_rdd$avg_host_review_score - cutoffs$cutoff[i]
+
+  rdd_p <- rdrobust(
+    y          = listings_rdd$num_reviews_l12m,
+    x          = x_recentered,
+    fuzzy      = listings_rdd$has_superhost,
+    masspoints = "adjust",
+    all        = TRUE
+  )
+
+  data.frame(
+    label    = cutoffs$label[i],
+    estimate = rdd_p$coef[1],
+    ci_lo    = rdd_p$ci[3, 1],
+    ci_hi    = rdd_p$ci[3, 2],
+    is_true  = cutoffs$is_true[i]
+  )
+}))
+
+placebo_results
+```
+
+```{r}
+placebo_results$label <- factor(placebo_results$label, levels = placebo_results$label)
+
+ggplot(placebo_results, aes(x = estimate, y = label,
+                             colour = ifelse(is_true, "True Cutoff", "Placebo"))) +
+  geom_point(size = 3) +
+  geom_errorbarh(aes(xmin = ci_lo, xmax = ci_hi), height = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "gray50") +
+  scale_colour_manual(values = c("True Cutoff" = "black", "Placebo" = "gray50")) +
+  labs(
+    title    = "Placebo Cutoff Test",
+    subtitle = "Placebo cutoffs should show no significant effect (CI crosses 0)",
+    x        = "LATE estimate (reviews in last 12 months)",
+    y        = NULL,
+    colour   = NULL
+  ) +
+  theme_minimal()
+```
+
+Here, we notice that for the covariates that we have, they fall to the right of the plot. This means a significant discontinuity was detected, meaning that our assumption about continuity of the potential outcomes is likely invalid. This is evidence that our results are not trustworthy.
+
+## Falsification test for sorting
+
+Check for sorting/manipulation at the cutoff. Excess mass just to the right of 0
+would indicate hosts gaming their scores to cross the 4.8 threshold.
+
+```{r}
+density_test <- rddensity(X = listings_rdd$centered_overall_score, c = 0, massPoints = TRUE)
+summary(density_test)
+```
+
+```{r}
+rdplotdensity(
+  rdd    = density_test,
+  X      = listings_rdd$centered_overall_score,
+  xlabel = "Centered overall score"
+)
+```
+
+$H_0$: The density of centered scores is continuous at the cutoff (no evidence of sorting)
+
+$H_1$: The density of centered scores is discontinuous at the cutoff (evidence of sorting)
+
+For all the window lengths, the results suggest that the density of overall ratings is discontinuous around the cutoff. 
+
+The trustworthiness of our results is actually ambiguous. According to this test, there could have been sorting. Maybe hosts found a way to inflate their rating with fake reviews since the 4.8 cutoff is one of the criteria to become a superhost that is public.
+
+At the same time it's possible that the differences in density on either side of the cutoff are just becuase the cutoff is at 4.8 and the highest rating possible is a 5. 
+
+Because the data could:  
+- have hosts that are mostly above the cutoff
+- be subject to sorting
+
+The results of the test are unreliable. This heavily affects the trustworthiness of our design.

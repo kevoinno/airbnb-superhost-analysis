@@ -22,6 +22,7 @@ The key identifying assumption is **smoothness**: the direct effect of the overa
 
 ## Notes on data cleaning
 - data was transformed from listing granularity to host granularity because metrics like response rate and overall rating are on the host level
+- the tenure (in days) of a host is defined as the number of days between the host_since date and the last_scraped date
 
 ## How to become a Superhost
 
@@ -63,3 +64,7 @@ To view interactive docs:
 ```bash
 uv run dbt docs generate && uv run dbt docs serve
 ```
+
+## TODO:
+- Read over the pdf
+- Try rewriting it to make sure you understand

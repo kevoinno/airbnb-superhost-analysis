@@ -10,4 +10,6 @@ dependencies = [
     "duckdb>=1.4.4",
     "marimo>=0.19.9",
     "pandas>=3.0.0",
+    "rddensity>=2.4.6",
+    "scipy>=1.17.1",
 ]
